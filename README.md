@@ -54,4 +54,8 @@ for exmaple
 >> final_ffmpeg_combine.bat E:\TalkingToon\test_wav_files\example.wav output.mp4
 ```
 
+
+# [License](LICENSE.md)
+
+
     
