@@ -15,7 +15,7 @@ import argparse
 import platform
 import torch
 from util.utils import try_mkdir
-from approaches.train_content import Audio2landmark_model
+from src.approaches.train_content import Audio2landmark_model
 
 
 if platform.release() == '4.4.0-83-generic':
