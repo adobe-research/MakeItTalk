@@ -30,7 +30,7 @@ Our method creates both non-photorealistic cartoon animations (top) and natural 
 - Python environment 3.6
 ```
 conda create -n makeittalk_env python=3.6
-conda activate makeittalk
+conda activate makeittalk_env
 ```
 - ffmpeg (https://ffmpeg.org/download.html)
 ```
@@ -55,7 +55,7 @@ Download the following pre-trained models to `examples/ckpt` folder.
 
 ## Animate You Portraits!
 
-`Nature human faces / Paintings` (warping through Image-to-image translation module)
+### _Nature human faces / Paintings_ (warping through Image-to-image translation module)
 
 - crop your portrait image into size `256x256` and put it under `examples` folder with `.jpg` format. 
 Make sure the head is almost in the middle (check existing examples for a reference).
@@ -73,7 +73,7 @@ to amply lip motion (in x/y-axis direction) and head motion displacements, defau
 
 
 
-`Non-photorealistic cartoon faces` (warping through Delaunay triangulation)
+### _Non-photorealistic cartoon faces_ (warping through Delaunay triangulation)
 
 - animate one of the existing puppets
 

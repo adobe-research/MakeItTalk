@@ -37,7 +37,7 @@ parser.add_argument('--load_G_name', type=str, default='examples/ckpt/ckpt_116_i
 parser.add_argument('--amp_lip_x', type=float, default=2.0)
 parser.add_argument('--amp_lip_y', type=float, default=2.0)
 parser.add_argument('--amp_pos', type=float, default=0.8)
-parser.add_argument('--reuse_train_emb_list', default=[]) #  ['E_kmpT-EfOg']) #  ['E_kmpT-EfOg']) # ['45hn7-LXDX8'])
+parser.add_argument('--reuse_train_emb_list', default=['45hn7-LXDX8']) #  ['E_kmpT-EfOg']) #  ['E_kmpT-EfOg']) # ['45hn7-LXDX8'])
 
 
 parser.add_argument('--add_audio_in', default=False, action='store_true')
@@ -177,27 +177,27 @@ for i in range(0,len(fls_names)):
 
     os.remove(os.path.join('examples_cartoon', fls_names[i]))
 
-    # ==============================================
-    # Step 4 : Vector art morphing (only work in WINDOWS)
-    # ==============================================
-    warp_exe = os.path.join(os.getcwd(), 'facewarp', 'facewarp.exe')
-    import os
-
-    if (os.path.exists(os.path.join(output_dir, 'output'))):
-        shutil.rmtree(os.path.join(output_dir, 'output'))
-    os.mkdir(os.path.join(output_dir, 'output'))
-    os.chdir('{}'.format(os.path.join(output_dir, 'output')))
-    print(os.getcwd())
-
-    os.system('{} {} {} {} {} {}'.format(
-        warp_exe,
-        os.path.join('examples_cartoon', DEMO_CH+'.png'),
-        os.path.join(output_dir, 'triangulation.txt'),
-        os.path.join(output_dir, 'reference_points.txt'),
-        os.path.join(output_dir, 'warped_points.txt'),
-        # os.path.join(ROOT_DIR, 'puppets', sys.argv[6]),
-        '-novsync -dump'))
-    os.system('ffmpeg -y -r 62.5 -f image2 -i "%06d.tga" -i {} -shortest {}'.format(
-        ain,
-        os.path.join(output_dir, sys.argv[8])
-    ))
+    # # ==============================================
+    # # Step 4 : Vector art morphing (only work in WINDOWS)
+    # # ==============================================
+    # warp_exe = os.path.join(os.getcwd(), 'facewarp', 'facewarp.exe')
+    # import os
+    #
+    # if (os.path.exists(os.path.join(output_dir, 'output'))):
+    #     shutil.rmtree(os.path.join(output_dir, 'output'))
+    # os.mkdir(os.path.join(output_dir, 'output'))
+    # os.chdir('{}'.format(os.path.join(output_dir, 'output')))
+    # print(os.getcwd())
+    #
+    # os.system('{} {} {} {} {} {}'.format(
+    #     warp_exe,
+    #     os.path.join('examples_cartoon', DEMO_CH+'.png'),
+    #     os.path.join(output_dir, 'triangulation.txt'),
+    #     os.path.join(output_dir, 'reference_points.txt'),
+    #     os.path.join(output_dir, 'warped_points.txt'),
+    #     # os.path.join(ROOT_DIR, 'puppets', sys.argv[6]),
+    #     '-novsync -dump'))
+    # os.system('ffmpeg -y -r 62.5 -f image2 -i "%06d.tga" -i {} -shortest {}'.format(
+    #     ain,
+    #     os.path.join(output_dir, sys.argv[8])
+    # ))

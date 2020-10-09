@@ -260,7 +260,7 @@ class Audio2landmark_model():
 
     def test(self, au_emb=None):
         with torch.no_grad():
-            self.__train_pass__(au_emb)
+            self.__train_pass__(au_emb, vis_fls=True)
 
     def __solve_inverse_lip2__(self, fl_dis_pred_pos_numpy):
         for j in range(fl_dis_pred_pos_numpy.shape[0]):
