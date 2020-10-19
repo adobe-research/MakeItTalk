@@ -41,7 +41,7 @@ sudo apt-get install ffmpeg
 pip install -r requirements.txt
 ```
 
-## Pre-trained Models
+## Pre-trained Models (to release soon)
 
 Download the following pre-trained models to `examples/ckpt` folder.
 
