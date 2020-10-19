@@ -55,7 +55,7 @@ Download the following pre-trained models to `examples/ckpt` folder.
 
 ## Animate You Portraits!
 
-### _Nature human faces / Paintings_ (warping through Image-to-image translation module)
+### _Nature Human Faces / Paintings_
 
 - crop your portrait image into size `256x256` and put it under `examples` folder with `.jpg` format. 
 Make sure the head is almost in the middle (check existing examples for a reference).
@@ -69,11 +69,13 @@ python main_end2end.py --jpg <portrait_file>
 ```
 
 - use addition args `--amp_lip_x <x> --amp_lip_y <y> --amp_pos <pos>` 
-to amply lip motion (in x/y-axis direction) and head motion displacements, default values are `<x>=2., <y>=2., <pos>=1.`
+to amply lip motion (in x/y-axis direction) and head motion displacements, default values are `<x>=2., <y>=2., <pos>=.5`
 
 
 
-### _Non-photorealistic cartoon faces_ (warping through Delaunay triangulation)
+### _Cartoon Faces_ 
+
+- put test audio files under `examples` folder as well with `.wav` format.
 
 - animate one of the existing puppets
 
@@ -89,7 +91,26 @@ python main_end2end_cartoon.py --jpg <cartoon_puppet_name>
 
 ## Train
 
-ToDo...
+### Train Voice Conversion Module
+Todo...
+
+### Train Content Branch
+- Create dataset root directory `<root_dir>`
+
+- Dataset: Download preprocessed dataset [[here]](), and put it under `<root_dir>/dump`.
+
+- Train script: Run script below. Models will be saved in `<root_dir>/ckpt/<train_instance_name>`.
+
+    ```shell script
+    python main_train_content.py --train --write --root_dir <root_dir> --name <train_instance_name>
+    ```
+  
+### Train Speaker-Aware Branch
+Todo...
+
+### Train Image-to-Image Translation
+
+Todo...
 
 ## [License](LICENSE.md)
 

@@ -14,6 +14,7 @@ import torch.optim as optim
 import torch.utils.data
 import time
 from src.dataset.audio2landmark.audio2landmark_dataset import Audio2landmark_Dataset
+from src.models.model_audio2landmark import Audio2landmark_content
 from util.utils import Record
 from util.icp import icp
 import numpy as np
@@ -31,7 +32,7 @@ class Audio2landmark_model():
 
         # Step 1 : load opt_parser
         self.opt_parser = opt_parser
-        self.std_face_id = np.loadtxt('dataset/utils/STD_FACE_LANDMARKS.txt')
+        self.std_face_id = np.loadtxt('src/dataset/utils/STD_FACE_LANDMARKS.txt')
         if(jpg_shape is not None):
             self.std_face_id = jpg_shape
         self.std_face_id = self.std_face_id.reshape(1, 204)
@@ -40,37 +41,43 @@ class Audio2landmark_model():
         self.train_data = Audio2landmark_Dataset(dump_dir=opt_parser.dump_dir,
                                                 dump_name='autovc_retrain_mel',
                                                 status='train',
-                                               num_window_frames=18,
-                                               num_window_step=1)
-        self.train_dataloader = torch.utils.data.DataLoader(self.train_data, batch_size=1,
+                                               num_window_frames=opt_parser.num_window_frames,
+                                               num_window_step=opt_parser.num_window_step)
+        self.train_dataloader = torch.utils.data.DataLoader(self.train_data, batch_size=opt_parser.batch_size,
                                                            shuffle=False, num_workers=0,
                                                            collate_fn=self.train_data.my_collate_in_segments_noemb)
         print('TRAIN num videos: {}'.format(len(self.train_data)))
 
+        self.eval_data = Audio2landmark_Dataset(dump_dir=opt_parser.dump_dir,
+                                                 dump_name='autovc_retrain_mel',
+                                                 status='test',
+                                                 num_window_frames=opt_parser.num_window_frames,
+                                                 num_window_step=opt_parser.num_window_step)
+        self.eval_dataloader = torch.utils.data.DataLoader(self.eval_data, batch_size=opt_parser.batch_size,
+                                                            shuffle=False, num_workers=0,
+                                                            collate_fn=self.eval_data.my_collate_in_segments_noemb)
+        print('EVAL num videos: {}'.format(len(self.eval_data)))
+
         # Step 3: Load model
-        self.C = Audio2landmark_content(num_window_frames=18,
-                                      in_size=80, use_prior_net=True,
-                                      bidirectional=False, drop_out=0.5)
+        self.C = Audio2landmark_content(num_window_frames=opt_parser.num_window_frames, hidden_size=opt_parser.hidden_size,
+                                      in_size=opt_parser.in_size, use_prior_net=opt_parser.use_prior_net,
+                                      bidirectional=False, drop_out=opt_parser.drop_out)
 
         if(opt_parser.load_a2l_C_name.split('/')[-1] != ''):
             ckpt = torch.load(opt_parser.load_a2l_C_name)
-            self.C.load_state_dict(ckpt['C'])
-            print('======== LOAD PRETRAINED FACE ID MODEL {} ========='.format(opt_parser.load_a2l_C_name))
+            self.C.load_state_dict(ckpt['model_g_face_id'])
+            print('======== LOAD PRETRAINED CONTENT BRANCH MODEL {} ========='.format(opt_parser.load_a2l_C_name))
         self.C.to(device)
 
         self.t_shape_idx = (27, 28, 29, 30, 33, 36, 39, 42, 45)
-        self.anchor_t_shape = np.loadtxt('dataset/utils/STD_FACE_LANDMARKS.txt')
+        self.anchor_t_shape = np.loadtxt('src/dataset/utils/STD_FACE_LANDMARKS.txt')
         self.anchor_t_shape = self.anchor_t_shape[self.t_shape_idx, :]
-        s = np.abs(self.anchor_t_shape[5, 0] - self.anchor_t_shape[8, 0])
-        self.anchor_t_shape = self.anchor_t_shape / s * 1.0
-        c2 = np.mean(self.anchor_t_shape[[4, 5, 8], :], axis=0)
-        self.anchor_t_shape -= c2
 
         self.opt_C = optim.Adam(self.C.parameters(), lr=opt_parser.lr, weight_decay=opt_parser.reg_lr)
 
         self.loss_mse = torch.nn.MSELoss()
 
-    def __train_content__(self, fls, aus, face_id):
+    def __train_content__(self, fls, aus, face_id, is_training=True):
 
         fls_gt = fls[:, 0, :].detach().clone().requires_grad_(False)
 
@@ -80,6 +87,7 @@ class Audio2landmark_model():
 
         fl_dis_pred, _ = self.C(aus, face_id)
 
+        ''' lip region weight '''
         w = torch.abs(fls[:, 0, 66 * 3 + 1] - fls[:, 0, 62 * 3 + 1])
         w = torch.tensor([1.0]).to(device) / (w * 4.0 + 0.1)
         w = w.unsqueeze(1)
@@ -100,7 +108,6 @@ class Audio2landmark_model():
             loss += torch.nn.functional.l1_loss(pred_motion, gt_motion)
 
         ''' use laplacian smooth loss '''
-        loss_laplacian = 0.
         if (self.opt_parser.lambda_laplacian_smooth_loss > 0.0):
             n1 = [1] + list(range(0, 16)) + [18] + list(range(17, 21)) + [23] + list(range(22, 26)) + \
                  [28] + list(range(27, 35)) + [41] + list(range(36, 41)) + [47] + list(range(42, 47)) + \
@@ -115,9 +122,20 @@ class Audio2landmark_model():
             loss_laplacian = torch.nn.functional.l1_loss(L_V, L_G)
             loss += loss_laplacian
 
-        self.opt_C.zero_grad()
-        loss.backward()
-        self.opt_C.step()
+        if(is_training):
+            self.opt_C.zero_grad()
+            loss.backward()
+            self.opt_C.step()
+
+        if(not is_training):
+            # ''' CALIBRATION '''
+            np_fl_dis_pred = fl_dis_pred.detach().cpu().numpy()
+            K = int(np_fl_dis_pred.shape[0] * 0.5)
+            for calib_i in range(204):
+                min_k_idx = np.argpartition(np_fl_dis_pred[:, calib_i], K)
+                m = np.mean(np_fl_dis_pred[min_k_idx[:K], calib_i])
+                np_fl_dis_pred[:, calib_i] = np_fl_dis_pred[:, calib_i] - m
+            fl_dis_pred = torch.tensor(np_fl_dis_pred, requires_grad=False).to(device)
 
         return fl_dis_pred, face_id[0:1, :], loss
 
@@ -125,21 +143,22 @@ class Audio2landmark_model():
         st_epoch = time.time()
 
         # Step 1: init setup
-        self.C.train()
-        data = self.train_data
-        dataloader = self.train_dataloader
-        status = 'TRAIN'
+        if(is_training):
+            self.C.train()
+            data = self.train_data
+            dataloader = self.train_dataloader
+            status = 'TRAIN'
+        else:
+            self.C.eval()
+            data = self.eval_data
+            dataloader = self.eval_dataloader
+            status = 'EVAL'
 
-        random_clip_index = np.random.randint(0, len(dataloader) - 1, 4)
-        random_clip_index = np.random.randint(0, 8, 2)
-        # random_clip_index = list(range(len(dataloader)))
-        print('random_clip_index', random_clip_index)
+        random_clip_index = np.random.permutation(len(dataloader))[0:self.opt_parser.random_clip_num]
+        print('random visualize clip index', random_clip_index)
 
         # Step 2: train for each batch
         for i, batch in enumerate(dataloader):
-
-            if(i >=8):
-                break
 
             global_id, video_name = data[i][0][1][0], data[i][0][1][1][:-4]
             inputs_fl, inputs_au = batch
@@ -148,6 +167,7 @@ class Audio2landmark_model():
             std_fls_list, fls_pred_face_id_list, fls_pred_pos_list = [], [], []
             seg_bs = 512
 
+            ''' pick a most closed lip frame from entire clip data '''
             close_fl_list = inputs_fl_ori[::10, 0, :]
             idx = self.__close_face_lip__(close_fl_list.detach().cpu().numpy())
             input_face_id = close_fl_list[idx:idx + 1, :]
@@ -162,7 +182,7 @@ class Audio2landmark_model():
                 input_face_id = torch.tensor(registered_landmarks[:, 0:3].reshape(1, 204), requires_grad=False,
                                              dtype=torch.float).to(device)
 
-            for in_batch in range(1):
+            for in_batch in range(self.opt_parser.in_batch_nepoch):
 
                 std_fls_list, fls_pred_face_id_list, fls_pred_pos_list = [], [], []
 
@@ -170,6 +190,9 @@ class Audio2landmark_model():
                     rand_start = np.random.randint(0, inputs_fl_ori.shape[0] // 5, 1).reshape(-1)
                     inputs_fl = inputs_fl_ori[rand_start[0]:]
                     inputs_au = inputs_au_ori[rand_start[0]:]
+                else:
+                    inputs_fl = inputs_fl_ori
+                    inputs_au = inputs_au_ori
 
                 for j in range(0, inputs_fl.shape[0], seg_bs):
 
@@ -182,7 +205,7 @@ class Audio2landmark_model():
                         continue
 
                     fl_dis_pred_pos, input_face_id, loss = \
-                        self.__train_content__(inputs_fl_segments, inputs_au_segments, input_face_id)
+                        self.__train_content__(inputs_fl_segments, inputs_au_segments, input_face_id, is_training)
 
                     fl_dis_pred_pos = (fl_dis_pred_pos + input_face_id).data.cpu().numpy()
                     ''' solve inverse lip '''
@@ -200,7 +223,7 @@ class Audio2landmark_model():
                             log_loss[key].add(locals()[key].data.cpu().numpy())
 
 
-                if (epoch % self.opt_parser.jpg_freq == 0 and i in random_clip_index and in_batch % self.opt_parser.jpg_freq == 0):
+                if (epoch % self.opt_parser.jpg_freq == 0 and (i in random_clip_index or in_batch % self.opt_parser.jpg_freq == 1)):
                     def save_fls_av(fake_fls_list, postfix='', ifsmooth=True):
                         fake_fls_np = np.concatenate(fake_fls_list)
                         filename = 'fake_fls_{}_{}_{}.txt'.format(epoch, video_name, postfix)
@@ -213,15 +236,24 @@ class Audio2landmark_model():
                                 fps=62.5, av_name='e{:04d}_{}_{}'.format(epoch, in_batch, postfix),
                                 postfix=postfix, root_dir=self.opt_parser.root_dir, ifsmooth=ifsmooth)
 
-                    if (True):
-                        if (self.opt_parser.show_animation):
-                            print('show animation ....')
-                            save_fls_av(fls_pred_pos_list, 'pred', ifsmooth=True)
-                            save_fls_av(std_fls_list, 'std', ifsmooth=False)
+                    if (self.opt_parser.show_animation and not is_training):
+                        print('show animation ....')
+                        save_fls_av(fls_pred_pos_list, 'pred_{}'.format(i), ifsmooth=True)
+                        save_fls_av(std_fls_list, 'std_{}'.format(i), ifsmooth=False)
+                        from util.vis import Vis_comp
+                        Vis_comp(run_name=self.opt_parser.name,
+                                 pred1='fake_fls_{}_{}_{}.txt'.format(epoch, video_name, 'pred_{}'.format(i)),
+                                 pred2='fake_fls_{}_{}_{}.txt'.format(epoch, video_name, 'std_{}'.format(i)),
+                                 audio_filename='{:05d}_{}_audio.wav'.format(global_id, video_name),
+                                fps=62.5, av_name='e{:04d}_{}_{}'.format(epoch, in_batch, 'comp_{}'.format(i)),
+                                postfix='comp_{}'.format(i), root_dir=self.opt_parser.root_dir, ifsmooth=False)
+
                     self.__save_model__(save_type='last_inbatch', epoch=epoch)
 
                 if (self.opt_parser.verbose <= 1):
-                    print('{} Epoch: #{} batch #{}/{}'.format(status, epoch, i, len(dataloader)), end=': ')
+                    print('{} Epoch: #{} batch #{}/{} inbatch #{}/{}'.format(
+                        status, epoch, i, len(dataloader),
+                    in_batch, self.opt_parser.in_batch_nepoch), end=': ')
                     for key in log_loss.keys():
                         print(key, '{:.5f}'.format(log_loss[key].per('batch')), end=', ')
                     print('')
@@ -251,14 +283,19 @@ class Audio2landmark_model():
         return idx
 
     def test(self):
+        eval_loss = {key: Record(['epoch', 'batch']) for key in ['loss']}
         with torch.no_grad():
-            self.__train_pass__(0, None)
+            self.__train_pass__(0, eval_loss, is_training=False)
 
     def train(self):
         train_loss = {key: Record(['epoch', 'batch']) for key in ['loss']}
+        eval_loss = {key: Record(['epoch', 'batch']) for key in ['loss']}
 
         for epoch in range(self.opt_parser.nepoch):
             self.__train_pass__(epoch=epoch, log_loss=train_loss)
+
+            with torch.no_grad():
+                self.__train_pass__(epoch, eval_loss, is_training=False)
 
 
     def __solve_inverse_lip2__(self, fl_dis_pred_pos_numpy):
@@ -290,7 +327,7 @@ class Audio2landmark_model():
     def __save_model__(self, save_type, epoch):
         if (self.opt_parser.write):
             torch.save({
-                'C': self.C.state_dict(),
+                'model_g_face_id': self.C.state_dict(),
                 'epoch': epoch
             }, os.path.join(self.opt_parser.ckpt_dir, 'ckpt_{}.pth'.format(save_type)))
 
