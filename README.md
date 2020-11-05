@@ -43,15 +43,15 @@ pip install -r requirements.txt
 
 ## Pre-trained Models
 
-Download the following pre-trained models to `examples/ckpt` folder.
+Download the following pre-trained models to `examples/ckpt` folder for testing your own animation.
 
 | Model |  Link to the model | 
 | :-------------: | :---------------: |
-| Voice Conversion  | [Link](https://)  |
-| Speech Content Module  | [Link](https://)  |
-| Speaker-aware Module  | [Link](https://)  |
-| Image2Image Translation Module  | [Link](https://)  |
-| Non-photorealistic Warping (.exe)  | [Link](https://)  |
+| Voice Conversion  | [Link](https://drive.google.com/file/d/1ZiwPp_h62LtjU0DwpelLUoodKPR85K7x/view?usp=sharing)  |
+| Speech Content Module  | [Link](https://drive.google.com/file/d/1r3bfEvTVl6pCNw5xwUhEglwDHjWtAqQp/view?usp=sharing)  |
+| Speaker-aware Module  | [Link](https://drive.google.com/file/d/1rV0jkyDqPW-aDJcj7xSO6Zt1zSXqn1mu/view?usp=sharing)  |
+| Image2Image Translation Module  | [Link](https://drive.google.com/drive/folders/18nqSIiBMrtl1oO1vJBNdjEfHf1MguPDf?usp=sharing)  |
+| Non-photorealistic Warping (.exe)  | [Link](https://drive.google.com/file/d/1rlj0PAUMdX8TLuywsn6ds_G6L63nAu0P/view?usp=sharing)  |
 
 ## Animate You Portraits!
 
@@ -97,7 +97,7 @@ Todo...
 ### Train Content Branch
 - Create dataset root directory `<root_dir>`
 
-- Dataset: Download preprocessed dataset [[here]](), and put it under `<root_dir>/dump`.
+- Dataset: Download preprocessed dataset [[here]](https://drive.google.com/drive/folders/1EwuAy3j1b9Zc1MsidUfxG_pJGc_cV60O?usp=sharing), and put it under `<root_dir>/dump`.
 
 - Train script: Run script below. Models will be saved in `<root_dir>/ckpt/<train_instance_name>`.
 
