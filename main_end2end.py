@@ -35,18 +35,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--jpg', type=str, default='{}.jpg'.format(default_head_name))
 parser.add_argument('--close_input_face_mouth', default=CLOSE_INPUT_FACE_MOUTH, action='store_true')
 
-
 parser.add_argument('--load_AUTOVC_name', type=str, default='examples/ckpt/ckpt_autovc.pth')
-parser.add_argument('--load_a2l_G_name', type=str, default='examples/ckpt/ckpt_a2l_db_e_875.pth')
-parser.add_argument('--load_a2l_C_name', type=str, default='examples/ckpt/ckpt_audio2landmark_c.pth')
+parser.add_argument('--load_a2l_G_name', type=str, default='examples/ckpt/ckpt_speaker_branch.pth')
+parser.add_argument('--load_a2l_C_name', type=str, default='examples/ckpt/ckpt_content_branch.pth') #ckpt_audio2landmark_c.pth')
 parser.add_argument('--load_G_name', type=str, default='examples/ckpt/ckpt_116_i2i_comb.pth') #ckpt_image2image.pth') #ckpt_i2i_finetune_150.pth') #c
 
 parser.add_argument('--amp_lip_x', type=float, default=2.)
 parser.add_argument('--amp_lip_y', type=float, default=2.)
-parser.add_argument('--amp_pos', type=float, default=1.)
+parser.add_argument('--amp_pos', type=float, default=.5)
 parser.add_argument('--reuse_train_emb_list', type=str, nargs='+', default=[]) #  ['iWeklsXc0H8']) #['45hn7-LXDX8']) #['E_kmpT-EfOg']) #'iWeklsXc0H8', '29k8RtSUjE0', '45hn7-LXDX8',
-# --reuse_train_emb_list 45hn7-LXDX8
-
 parser.add_argument('--add_audio_in', default=False, action='store_true')
 parser.add_argument('--comb_fan_awing', default=False, action='store_true')
 parser.add_argument('--output_folder', type=str, default='examples')
@@ -84,7 +81,7 @@ if(opt_parser.close_input_face_mouth):
 
 
 ''' Additional manual adjustment to input face landmarks (slimmer lips and wider eyes) '''
-shape_3d[48:, 0] = (shape_3d[48:, 0] - np.mean(shape_3d[48:, 0])) * 0.95 + np.mean(shape_3d[48:, 0])
+# shape_3d[48:, 0] = (shape_3d[48:, 0] - np.mean(shape_3d[48:, 0])) * 0.95 + np.mean(shape_3d[48:, 0])
 shape_3d[49:54, 1] += 1.
 shape_3d[55:60, 1] -= 1.
 shape_3d[[37,38,43,44], 1] -=2

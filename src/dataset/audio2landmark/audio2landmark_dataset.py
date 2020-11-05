@@ -79,7 +79,7 @@ class Audio2landmark_Dataset(data.Dataset):
         return fls, aus, embs
 
     def my_collate_in_segments_noemb(self, batch):
-        fls, aus, embs = [], [], []
+        fls, aus = [], []
         for fl, au in batch:
             fl_data, au_data = fl[0], au[0]
             assert (fl_data.shape[0] == au_data.shape[0])
@@ -229,7 +229,7 @@ class Speaker_aware_branch_Dataset(data.Dataset):
         #     print('SAVE!')
 
 
-        au_mean_std = np.loadtxt('dataset/utils/MEAN_STD_AUTOVC_RETRAIN_MEL_AU.txt') # np.mean(self.au_data[0][0]), np.std(self.au_data[0][0])
+        au_mean_std = np.loadtxt('src/dataset/utils/MEAN_STD_AUTOVC_RETRAIN_MEL_AU.txt') # np.mean(self.au_data[0][0]), np.std(self.au_data[0][0])
         au_mean, au_std = au_mean_std[0:au_mean_std.shape[0]//2], au_mean_std[au_mean_std.shape[0]//2:]
 
         self.au_data = [((au - au_mean) / au_std, info) for au, info in self.au_data]

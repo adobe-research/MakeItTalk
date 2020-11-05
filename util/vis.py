@@ -102,7 +102,8 @@ class Vis():
 
 class Vis_old():
 
-    def __init__(self, run_name, pred_fl_filename, audio_filename, av_name='NAME', fps=100, frames=625, postfix='', root_dir=r'E:\Dataset\TalkingToon\Obama', ifsmooth=True):
+    def __init__(self, run_name, pred_fl_filename, audio_filename, av_name='NAME', fps=100, frames=625,
+                 postfix='', root_dir=r'E:\Dataset\TalkingToon\Obama', ifsmooth=True, rand_start=0):
 
         print(root_dir)
         self.src_dir = os.path.join(root_dir, r'nn_result/{}'.format(run_name))
@@ -140,13 +141,19 @@ class Vis_old():
         # out = out.overwrite_output().global_args('-loglevel', 'quiet')
         # out.run()
 
+        os.system('ffmpeg -y -loglevel error -i {} -ss {} {}'.format(
+            ain, rand_start/62.5,
+            os.path.join(self.src_dir, '{}_a_tmp.wav'.format(av_name))
+        ))
+
         os.system('ffmpeg -y -loglevel error -i {} -i {} -pix_fmt yuv420p -strict -2 -shortest {}'.format(
             os.path.join(self.src_dir, 'tmp.mp4'),
-            ain,
+            os.path.join(self.src_dir, '{}_a_tmp.wav'.format(av_name)),
             os.path.join(self.src_dir, '{}_av.mp4'.format(av_name))
         ))
 
         os.remove(os.path.join(self.src_dir, 'tmp.mp4'))
+        os.remove(os.path.join(self.src_dir, '{}_a_tmp.wav'.format(av_name)))
 
         # os.remove(os.path.join(self.src_dir, filename))
         # exit(0)

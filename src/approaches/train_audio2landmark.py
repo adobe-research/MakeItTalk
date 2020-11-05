@@ -97,7 +97,7 @@ class Audio2landmark_model():
             print(key)
         print('====================================')
 
-    def __train_face_and_pos__(self, fls, aus, embs, face_id, smooth_win=31, close_mouth_ratio=.66):
+    def __train_face_and_pos__(self, fls, aus, embs, face_id, smooth_win=31, close_mouth_ratio=.99):
 
         fls_without_traj = fls[:, 0, :].detach().clone().requires_grad_(False)
 
@@ -107,7 +107,7 @@ class Audio2landmark_model():
         baseline_face_id = face_id.detach()
 
         z = torch.tensor(torch.zeros(aus.shape[0], 128), requires_grad=False, dtype=torch.float).to(device)
-        fl_dis_pred, _, spk_encode = self.G(aus, embs * 3.0, face_id, fls_without_traj, z, add_z_spk=True)
+        fl_dis_pred, _, spk_encode = self.G(aus, embs * 3.0, face_id, fls_without_traj, z, add_z_spk=False)
 
         # ADD CONTENT
         from scipy.signal import savgol_filter
@@ -133,16 +133,30 @@ class Audio2landmark_model():
 
         # ''' CALIBRATION '''
         baseline_pred_fls, _ = self.C(aus[:, 0:18, :], residual_face_id)
-        mean_face_id = torch.mean(baseline_pred_fls.detach(), dim=0, keepdim=True)
-        residual_face_id -= mean_face_id.view(1, 204) * 1.
-        # ''' ======================== '''
-
-        baseline_pred_fls, _ = self.C(aus[:, 0:18, :], residual_face_id)
-        baseline_pred_fls[:, 48 * 3::3] *= self.opt_parser.amp_lip_x  # mouth x
-        baseline_pred_fls[:, 48 * 3 + 1::3] *= self.opt_parser.amp_lip_y  # mouth y
+        baseline_pred_fls = self.__calib_baseline_pred_fls__(baseline_pred_fls)
         fl_dis_pred += baseline_pred_fls
 
         return fl_dis_pred, face_id[0:1, :]
+
+    def __calib_baseline_pred_fls_old_(self, baseline_pred_fls, residual_face_id, aus):
+        mean_face_id = torch.mean(baseline_pred_fls.detach(), dim=0, keepdim=True)
+        residual_face_id -= mean_face_id.view(1, 204) * 1.
+        baseline_pred_fls, _ = self.C(aus, residual_face_id)
+        baseline_pred_fls[:, 48 * 3::3] *= self.opt_parser.amp_lip_x  # mouth x
+        baseline_pred_fls[:, 48 * 3 + 1::3] *= self.opt_parser.amp_lip_y  # mouth y
+        return baseline_pred_fls
+
+    def __calib_baseline_pred_fls__(self, baseline_pred_fls, ratio=0.5):
+        np_fl_dis_pred = baseline_pred_fls.detach().cpu().numpy()
+        K = int(np_fl_dis_pred.shape[0] * ratio)
+        for calib_i in range(204):
+            min_k_idx = np.argpartition(np_fl_dis_pred[:, calib_i], K)
+            m = np.mean(np_fl_dis_pred[min_k_idx[:K], calib_i])
+            np_fl_dis_pred[:, calib_i] = np_fl_dis_pred[:, calib_i] - m
+        baseline_pred_fls = torch.tensor(np_fl_dis_pred, requires_grad=False).to(device)
+        baseline_pred_fls[:, 48 * 3::3] *= self.opt_parser.amp_lip_x  # mouth x
+        baseline_pred_fls[:, 48 * 3 + 1::3] *= self.opt_parser.amp_lip_y  # mouth y
+        return baseline_pred_fls
 
     def __train_pass__(self, au_emb=None, centerize_face=False, no_y_rotation=False, vis_fls=False):
 
