@@ -15,6 +15,7 @@ from src.dataset.audio2landmark.audio2landmark_dataset import Audio2landmark_Dat
 from src.models.model_audio2landmark import *
 from util.utils import get_n_params
 import numpy as np
+import pickle
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -77,20 +78,8 @@ class Audio2landmark_model():
         self.anchor_t_shape = np.loadtxt('src/dataset/utils/STD_FACE_LANDMARKS.txt')
         self.anchor_t_shape = self.anchor_t_shape[self.t_shape_idx, :]
 
-        self.test_embs = {}
-        self.emb_data = Audio2landmark_Dataset(dump_dir='examples/dump',
-                                                dump_name='celeb_withrot',
-                                                status='val',
-                                                num_window_frames=18,
-                                                num_window_step=1)
-        self.emb_dataloader = torch.utils.data.DataLoader(self.emb_data, batch_size=1,
-                                                           shuffle=False, num_workers=0,
-                                                           collate_fn=self.emb_data.my_collate_in_segments)
-        for i, batch in enumerate(self.emb_dataloader):
-            global_id, video_name = self.emb_data[i][0][1][0], self.emb_data[i][0][1][1][:-4]
-            if (video_name.split('_x_')[1] not in self.test_embs.keys()):
-                inputs_fl, inputs_au, inputs_emb = batch
-                self.test_embs[video_name.split('_x_')[1]] = inputs_emb[0]
+        with open(os.path.join('examples', 'dump', 'emb.pickle'), 'rb') as fp:
+            self.test_embs = pickle.load(fp)
 
         print('====================================')
         for key in self.test_embs.keys():

@@ -41,7 +41,7 @@ sudo apt-get install ffmpeg
 pip install -r requirements.txt
 ```
 
-## Pre-trained Models (to release soon)
+## Pre-trained Models
 
 Download the following pre-trained models to `examples/ckpt` folder for testing your own animation.
 
@@ -54,6 +54,8 @@ Download the following pre-trained models to `examples/ckpt` folder for testing 
 | Non-photorealistic Warping (.exe)  | [Link](https://drive.google.com/file/d/1rlj0PAUMdX8TLuywsn6ds_G6L63nAu0P/view?usp=sharing)  |
 
 ## Animate You Portraits!
+
+- Download pre-trained embedding [[here]](https://drive.google.com/file/d/18-0CYl5E6ungS3H4rRSHjfYvvm-WwjTI/view?usp=sharing) and save to `examples/dump` folder.
 
 ### _Nature Human Faces / Paintings_
 
