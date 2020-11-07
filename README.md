@@ -126,3 +126,16 @@ Todo...
 
 ## [License](LICENSE.md)
 
+## Acknowledgement
+
+We would like to thank Timothy Langlois for the narration, and
+[Kaizhi Qian](https://scholar.google.com/citations?user=uEpr4C4AAAAJ&hl=en) 
+for the help with the [voice conversion module](https://auspicious3000.github.io/icassp-2020-demo/). We
+thank Daichi Ito for sharing the caricature image and Dave Werner
+for Wilk, the gruff but ultimately lovable puppet. 
+
+This research is partially funded by NSF (EAGER-1942069)
+and a gift from Adobe. Our experiments were performed in the
+UMass GPU cluster obtained under the Collaborative Fund managed
+by the MassTech Collaborative.
+
