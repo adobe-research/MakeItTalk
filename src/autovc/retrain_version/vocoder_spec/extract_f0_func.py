@@ -6,8 +6,8 @@ from scipy import signal
 from librosa.filters import mel
 from numpy.random import RandomState
 from pysptk import sptk
-from thirdparty.autovc.retrain_version.vocoder_spec.utils import butter_highpass
-from thirdparty.autovc.retrain_version.vocoder_spec.utils import speaker_normalization
+from src.autovc.retrain_version.vocoder_spec.utils import butter_highpass
+from src.autovc.retrain_version.vocoder_spec.utils import speaker_normalization
 from scipy.signal import get_window
 import glob
 

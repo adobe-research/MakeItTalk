@@ -18,13 +18,23 @@ In addition, our method generalizes well for faces and characters that were not 
 >
 > [[Project page]](https://people.umass.edu/~yangzhou/MakeItTalk/) 
 > [[Paper]](https://people.umass.edu/~yangzhou/MakeItTalk/MakeItTalk_SIGGRAPH_Asia_Final_round-5.pdf) 
-> [[Video]](https://www.youtube.com/watch?v=OU6Ctzhpc6s) <!-- [[Arxiv]](https://arxiv.org/abs/1907.11308) -->
+> [[Video]](https://www.youtube.com/watch?v=OU6Ctzhpc6s) 
+> [[Arxiv]](https://arxiv.org/abs/2004.12992)
+> [[Colab Demo]](quick_demo.ipynb)
+> [[Colab Demo TDLR]](quick_demo_tdlr.ipynb)
 
 ![img](doc/teaser.png)
 
 Figure. Given an audio speech signal and a single portrait image   as input (left), our model generates speaker-aware talking-head animations (right). 
 Both the speech signal and the input face image are not observed during the model training process.
 Our method creates both non-photorealistic cartoon animations (top) and natural human face videos (bottom).
+
+## Updates
+
+- [x] Pre-trained models
+- [x] Google colab quick demo for natural faces [[detail]](quick_demo.ipynb) [[TDLR]](quick_demo_tdlr.ipynb)
+- [ ] Training code for each module
+- [ ] Customized puppet creating tool
 
 ## Requirements
 - Python environment 3.6
@@ -50,7 +60,7 @@ Download the following pre-trained models to `examples/ckpt` folder for testing 
 | Voice Conversion  | [Link](https://drive.google.com/file/d/1ZiwPp_h62LtjU0DwpelLUoodKPR85K7x/view?usp=sharing)  |
 | Speech Content Module  | [Link](https://drive.google.com/file/d/1r3bfEvTVl6pCNw5xwUhEglwDHjWtAqQp/view?usp=sharing)  |
 | Speaker-aware Module  | [Link](https://drive.google.com/file/d/1rV0jkyDqPW-aDJcj7xSO6Zt1zSXqn1mu/view?usp=sharing)  |
-| Image2Image Translation Module  | [Link](https://drive.google.com/drive/folders/18nqSIiBMrtl1oO1vJBNdjEfHf1MguPDf?usp=sharing)  |
+| Image2Image Translation Module  | [Link](https://drive.google.com/file/d/1i2LJXKp-yWKIEEgJ7C6cE3_2NirfY_0a/view?usp=sharing)  |
 | Non-photorealistic Warping (.exe)  | [Link](https://drive.google.com/file/d/1rlj0PAUMdX8TLuywsn6ds_G6L63nAu0P/view?usp=sharing)  |
 
 ## Animate You Portraits!

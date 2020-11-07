@@ -3,11 +3,12 @@ import numpy as np
 import pickle
 import torch
 from math import ceil
-from thirdparty.autovc.retrain_version.model_vc_37_1 import Generator
+from src.autovc.retrain_version.model_vc_37_1 import Generator
 from pydub import AudioSegment
 import pynormalize.pynormalize
 from scipy.io import  wavfile as wav
-from scipy.signal import stft, istft
+from scipy.signal import stft
+
 
 def match_target_amplitude(sound, target_dBFS):
     change_in_dBFS = target_dBFS - sound.dBFS
@@ -57,10 +58,10 @@ class AutoVC_mel_Convertor():
         normalized_sound.export(audio_file, format='wav')
 
 
-        from thirdparty.autovc.retrain_version.vocoder_spec.extract_f0_func import extract_f0_func_audiofile
+        from src.autovc.retrain_version.vocoder_spec.extract_f0_func import extract_f0_func_audiofile
         S, f0_norm = extract_f0_func_audiofile(audio_file, 'M')
 
-        from thirdparty.autovc.utils import quantize_f0_interp
+        from src.autovc.utils import quantize_f0_interp
         f0_onehot = quantize_f0_interp(f0_norm)
 
         from thirdparty.resemblyer_util.speaker_emb import get_spk_emb
@@ -210,7 +211,7 @@ class AutoVC_mel_Convertor():
         g_checkpoint = torch.load(autovc_model_path, map_location=device)
         G.load_state_dict(g_checkpoint['model'])
 
-        emb = np.loadtxt('thirdparty/autovc/retrain_version/obama_emb.txt')
+        emb = np.loadtxt('src/autovc/retrain_version/obama_emb.txt')
         emb_trg = torch.from_numpy(emb[np.newaxis, :].astype('float32')).to(device)
 
         aus = []
@@ -220,9 +221,9 @@ class AutoVC_mel_Convertor():
         normalized_sound = match_target_amplitude(sound, -20.0)
         normalized_sound.export(audio_file, format='wav')
 
-        from thirdparty.autovc.retrain_version.vocoder_spec.extract_f0_func import extract_f0_func_audiofile
+        from src.autovc.retrain_version.vocoder_spec.extract_f0_func import extract_f0_func_audiofile
         x_real_src, f0_norm = extract_f0_func_audiofile(audio_file, 'F')
-        from thirdparty.autovc.utils import quantize_f0_interp
+        from src.autovc.utils import quantize_f0_interp
         f0_org_src = quantize_f0_interp(f0_norm)
         from thirdparty.resemblyer_util.speaker_emb import get_spk_emb
         emb, _ = get_spk_emb(audio_file)

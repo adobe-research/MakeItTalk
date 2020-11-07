@@ -18,9 +18,8 @@ from src.approaches.train_image_translation import Image_translation_block
 import torch
 import pickle
 import face_alignment
-from thirdparty.autovc.AutoVC_mel_Convertor_retrain_version import AutoVC_mel_Convertor
+from src.autovc.AutoVC_mel_Convertor_retrain_version import AutoVC_mel_Convertor
 import shutil
-import time
 import util.utils as util
 from scipy.signal import savgol_filter
 

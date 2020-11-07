@@ -13,12 +13,9 @@ sys.path.append('thirdparty/AdaptiveWingLoss')
 import os, glob
 import numpy as np
 import argparse
-from src.approaches.train_image_translation import Image_translation_block
 import pickle
-import face_alignment
-from thirdparty.autovc.AutoVC_mel_Convertor_retrain_version import AutoVC_mel_Convertor
+from src.autovc.AutoVC_mel_Convertor_retrain_version import AutoVC_mel_Convertor
 import shutil
-from util.icp import icp
 
 ADD_NAIVE_EYE = False
 GEN_AUDIO = True
@@ -30,8 +27,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--jpg', type=str, default=DEMO_CH)
 
 parser.add_argument('--load_AUTOVC_name', type=str, default='examples/ckpt/ckpt_autovc.pth')
-parser.add_argument('--load_a2l_G_name', type=str, default='examples/ckpt/ckpt_a2l_db_e_875.pth') #ckpt_audio2landmark_g.pth') #
-parser.add_argument('--load_a2l_C_name', type=str, default='examples/ckpt/ckpt_audio2landmark_c.pth')
+parser.add_argument('--load_a2l_G_name', type=str, default='examples/ckpt/ckpt_speaker_branch.pth') #ckpt_audio2landmark_g.pth') #
+parser.add_argument('--load_a2l_C_name', type=str, default='examples/ckpt/ckpt_content_branch.pth') #ckpt_audio2landmark_c.pth')
 parser.add_argument('--load_G_name', type=str, default='examples/ckpt/ckpt_116_i2i_comb.pth') #ckpt_i2i_finetune_150.pth') #ckpt_image2image.pth') #
 
 parser.add_argument('--amp_lip_x', type=float, default=2.0)
@@ -63,6 +60,8 @@ parser.add_argument('--lambda_laplacian_smooth_loss', default=1.0, type=float)
 parser.add_argument('--use_11spk_only', default=False, action='store_true')
 
 opt_parser = parser.parse_args()
+
+DEMO_CH = opt_parser.jpg
 
 shape_3d = np.loadtxt('examples_cartoon/{}_face_close_mouth.txt'.format(opt_parser.jpg))
 
