@@ -14,7 +14,7 @@ import os, glob
 import numpy as np
 import cv2
 import argparse
-from dataset.image_translation.data_preparation import landmark_extraction, landmark_image_to_data
+from src.dataset.image_translation import landmark_extraction, landmark_image_to_data
 from approaches.train_image_translation import Image_translation_block
 import platform
 import torch

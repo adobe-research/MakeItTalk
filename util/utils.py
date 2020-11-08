@@ -8,14 +8,12 @@
  
 """
 
-import torch
 import torch.nn as nn
 import torch.nn.init as init
-from torch._six import string_classes, int_classes
-import re, os
-import collections
+import os
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 
 class Point:
     def __init__(self, x, y):
@@ -269,7 +267,7 @@ def smooth(x, window_len=11, window='hanning'):
 
 def get_puppet_info(DEMO_CH, ROOT_DIR):
     import numpy as np
-    B = 50
+    B = 5000
     # for wilk example
     if (DEMO_CH == 'wilk_old'):
         bound = np.array([-B, -B, -B, 459, -B, B+918, 419, B+918, B+838, B+918, B+838, 459, B+838, -B, 419, -B]).reshape(1, -1)
@@ -326,3 +324,67 @@ def get_puppet_info(DEMO_CH, ROOT_DIR):
         scale, shift = ss[0], np.array([ss[1], ss[2]])
 
     return bound, scale, shift
+
+
+def close_input_face_mouth(shape_3d, p1=0.7, p2=0.5):
+    shape_3d = shape_3d.reshape((1, 68, 3))
+    index1 = list(range(60 - 1, 55 - 1, -1))
+    index2 = list(range(68 - 1, 65 - 1, -1))
+    mean_out = 0.5 * (shape_3d[:, 49:54] + shape_3d[:, index1])
+    mean_in = 0.5 * (shape_3d[:, 61:64] + shape_3d[:, index2])
+    shape_3d[:, 50:53] -= (shape_3d[:, 61:64] - mean_in) * p1
+    shape_3d[:, list(range(59 - 1, 56 - 1, -1))] -= (shape_3d[:, index2] - mean_in) * p1
+    shape_3d[:, 49] -= (shape_3d[:, 61] - mean_in[:, 0]) * p2
+    shape_3d[:, 53] -= (shape_3d[:, 63] - mean_in[:, -1]) * p2
+    shape_3d[:, 59] -= (shape_3d[:, 67] - mean_in[:, 0]) * p2
+    shape_3d[:, 55] -= (shape_3d[:, 65] - mean_in[:, -1]) * p2
+    # shape_3d[:, 61:64] = shape_3d[:, index2] = mean_in
+    shape_3d[:, 61:64] -= (shape_3d[:, 61:64] - mean_in) * p1
+    shape_3d[:, index2] -= (shape_3d[:, index2] - mean_in) * p1
+    shape_3d = shape_3d.reshape((68, 3))
+
+    return shape_3d
+
+def norm_input_face(shape_3d):
+    scale = 1.6 / (shape_3d[0, 0] - shape_3d[16, 0])
+    shift = - 0.5 * (shape_3d[0, 0:2] + shape_3d[16, 0:2])
+    shape_3d[:, 0:2] = (shape_3d[:, 0:2] + shift) * scale
+    face_std = np.loadtxt('src/dataset/utils/STD_FACE_LANDMARKS.txt').reshape(68, 3)
+    shape_3d[:, -1] = face_std[:, -1] * 0.1
+    shape_3d[:, 0:2] = -shape_3d[:, 0:2]
+
+    return shape_3d, scale, shift
+
+def add_naive_eye(fl):
+    for t in range(fl.shape[0]):
+        r = 0.95
+        fl[t, 37], fl[t, 41] = r * fl[t, 37] + (1 - r) * fl[t, 41], (1 - r) * fl[t, 37] + r * fl[t, 41]
+        fl[t, 38], fl[t, 40] = r * fl[t, 38] + (1 - r) * fl[t, 40], (1 - r) * fl[t, 38] + r * fl[t, 40]
+        fl[t, 43], fl[t, 47] = r * fl[t, 43] + (1 - r) * fl[t, 47], (1 - r) * fl[t, 43] + r * fl[t, 47]
+        fl[t, 44], fl[t, 46] = r * fl[t, 44] + (1 - r) * fl[t, 46], (1 - r) * fl[t, 44] + r * fl[t, 46]
+
+    K1, K2 = 10, 15
+    length = fl.shape[0]
+    close_time_stamp = [30]
+    t = 30
+    while (t < length - 1 - K2):
+        t += 60
+        t += np.random.randint(30, 90)
+        if (t < length - 1 - K2):
+            close_time_stamp.append(t)
+    for t in close_time_stamp:
+        fl[t, 37], fl[t, 41] = 0.25 * fl[t, 37] + 0.75 * fl[t, 41], 0.25 * fl[t, 37] + 0.75 * fl[t, 41]
+        fl[t, 38], fl[t, 40] = 0.25 * fl[t, 38] + 0.75 * fl[t, 40], 0.25 * fl[t, 38] + 0.75 * fl[t, 40]
+        fl[t, 43], fl[t, 47] = 0.25 * fl[t, 43] + 0.75 * fl[t, 47], 0.25 * fl[t, 43] + 0.75 * fl[t, 47]
+        fl[t, 44], fl[t, 46] = 0.25 * fl[t, 44] + 0.75 * fl[t, 46], 0.25 * fl[t, 44] + 0.75 * fl[t, 46]
+
+        def interp_fl(t0, t1, t2, r):
+            for index in [37, 38, 40, 41, 43, 44, 46, 47]:
+                fl[t0, index] = r * fl[t1, index] + (1 - r) * fl[t2, index]
+
+        for t0 in range(t - K1 + 1, t):
+            interp_fl(t0, t - K1, t, r=(t - t0) / 1. / K1)
+        for t0 in range(t + 1, t + K2):
+            interp_fl(t0, t, t + K2, r=(t + K2 - 1 - t0) / 1. / K2)
+
+    return fl
