@@ -240,7 +240,7 @@ class Audio2landmark_model():
                         # print(frame_t_shape[i, 0])
                     fake_fls_np = fake_fls_np.reshape((-1, 68 * 3))
 
-                filename = 'pred_fls_{}_{}.txt'.format(video_name.split('/')[-1], key)
+                filename = 'pred_fls_{}_{}.txt'.format(video_name.split('\\')[-1], key)
                 np.savetxt(os.path.join(self.opt_parser.output_folder, filename), fake_fls_np, fmt='%.6f')
 
                 # ''' Visualize result in landmarks '''
