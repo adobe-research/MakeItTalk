@@ -50,6 +50,15 @@ sudo apt-get install ffmpeg
 ```
 pip install -r requirements.txt
 ```
+- `winehq-stable` for cartoon face warping in Ubuntu (https://wiki.winehq.org/Ubuntu). Tested on Ubuntu16.04, wine==5.0.3.
+```
+sudo dpkg --add-architecture i386
+wget -nc https://dl.winehq.org/wine-builds/winehq.key
+sudo apt-key add winehq.key
+sudo apt-add-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ xenial main'
+sudo apt update
+sudo apt install --install-recommends winehq-stable
+```
 
 ## Pre-trained Models
 
@@ -96,8 +105,13 @@ to amply lip motion (in x/y-axis direction) and head motion displacements, defau
 | Image  | ![img](examples_cartoon/wilk_fullbody.jpg)  | ![img](examples_cartoon/roy_full.png)  | ![img](examples_cartoon/sketch.png)  | ![img](examples_cartoon/color.jpg)  | ![img](examples_cartoon/cartoonM.png)  | ![img](examples_cartoon/danbooru1.jpg)  |
 
 ```
-python main_end2end_cartoon.py --jpg <cartoon_puppet_name>
+python main_end2end_cartoon.py --jpg <cartoon_puppet_name_with_extension> --jpg_bg <puppet_background_with_extension>
 ```
+
+- `--jpg_bg` takes a same-size image as the background image to create the animation, such as the puppet's body, the overall fixed background image. If you want to use the background, make sure the puppet face image (i.e. `--jpg` image) is in `png` format and is transparent on the non-face area. If you don't need any background, please also create a same-size image (e.g. a pure white image) to hold the argument place.
+
+- use addition args `--amp_lip_x <x> --amp_lip_y <y> --amp_pos <pos>` 
+to amply lip motion (in x/y-axis direction) and head motion displacements, default values are `<x>=2., <y>=2., <pos>=.5`
 
 - create your own puppets (ToDo...)
 
@@ -130,8 +144,9 @@ Todo...
 
 We would like to thank Timothy Langlois for the narration, and
 [Kaizhi Qian](https://scholar.google.com/citations?user=uEpr4C4AAAAJ&hl=en) 
-for the help with the [voice conversion module](https://auspicious3000.github.io/icassp-2020-demo/). We
-thank Daichi Ito for sharing the caricature image and Dave Werner
+for the help with the [voice conversion module](https://auspicious3000.github.io/icassp-2020-demo/). 
+We thank [Jakub Fiser](https://research.adobe.com/person/jakub-fiser/) for implementing the real-time GPU version of the triangle morphing algorithm. 
+We thank Daichi Ito for sharing the caricature image and Dave Werner
 for Wilk, the gruff but ultimately lovable puppet. 
 
 This research is partially funded by NSF (EAGER-1942069)
