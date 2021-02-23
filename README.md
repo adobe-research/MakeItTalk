@@ -144,8 +144,9 @@ Todo...
 
 We would like to thank Timothy Langlois for the narration, and
 [Kaizhi Qian](https://scholar.google.com/citations?user=uEpr4C4AAAAJ&hl=en) 
-for the help with the [voice conversion module](https://auspicious3000.github.io/icassp-2020-demo/). We
-thank Daichi Ito for sharing the caricature image and Dave Werner
+for the help with the [voice conversion module](https://auspicious3000.github.io/icassp-2020-demo/). 
+We thank [Jakub Fiser](https://research.adobe.com/person/jakub-fiser/) for implementing the real-time GPU version of the triangle morphing algorithm. 
+We thank Daichi Ito for sharing the caricature image and Dave Werner
 for Wilk, the gruff but ultimately lovable puppet. 
 
 This research is partially funded by NSF (EAGER-1942069)
