@@ -95,7 +95,7 @@ static int run(int argc, char ** argv)
     bool show_wireframe = false;
     bool dump_images    = false;
 
-    for (int i = 5; i < argc; i++)
+    for (int i = 6; i < argc; i++)
     {
         if      (strcmp(argv[i], "-novsync"  ) == 0) { no_vsync       = true; }
         else if (strcmp(argv[i], "-wireframe") == 0) { show_wireframe = true; }
@@ -111,10 +111,11 @@ static int run(int argc, char ** argv)
     stbi__flip_vertically_on_write   = 1;
 
     // Parse the inputs.
-    const image ref_img ( "D:/Projects/dingwarp/test/image.png");// (argv[1]);
-    const auto  tri_idx = parse_numberfile<uint16_t>("D:/Projects/dingwarp/test/triangulation.txt");// (argv[2]);
-    const auto  ref_pts = parse_numberfile<float   >("D:/Projects/dingwarp/test/reference_points.txt");// (argv[3]);
-    const auto  wrp_pts = parse_numberfile<float   >("D:/Projects/dingwarp/test/warped_points.txt");// (argv[4]);
+    const image ref_img (argv[1]);
+    const image ref_background_img (argv[5]);
+    const auto  tri_idx = parse_numberfile<uint16_t>( argv[2]);
+    const auto  ref_pts = parse_numberfile<float   >( argv[3]);
+    const auto  wrp_pts = parse_numberfile<float   >( argv[4]);
 
     // Check that we have correct amount of warped points.
     if (wrp_pts.size() % ref_pts.size() != 0)
@@ -153,6 +154,14 @@ static int run(int argc, char ** argv)
         pix[2] = pix[2] * pix[3] / 255;
     }
 
+    // Convert the image to premultiplied alpha.
+    // for (int i = 0, n = ref_background_img.width * ref_background_img.height * 4; i < n; i += 4)
+    // {
+    //     uint8_t * pix = ref_background_img.data.get() + i;
+    //     pix[0] = pix[0] / 255;
+    //     pix[1] = pix[1] / 255;
+    //     pix[2] = pix[2] / 255;
+    // }
 
     // Upload the image to a texture texture.
     GLuint tex = 0;
@@ -162,6 +171,15 @@ static int run(int argc, char ** argv)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+
+    GLuint bg_tex = 0;
+    glGenTextures(1, &bg_tex);
+    glBindTexture  (GL_TEXTURE_2D, bg_tex);
+    glTexImage2D   (GL_TEXTURE_2D, 0, GL_RGBA, ref_background_img.width, ref_background_img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, ref_background_img.data.get());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
     // Process all the warped images.
     const size_t n = wrp_pts.size() / ref_pts.size();
           size_t i = 0;
@@ -169,12 +187,12 @@ static int run(int argc, char ** argv)
     // Setup OpenGL state.
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glDisable(GL_DEPTH_TEST);
-    glEnable (GL_TEXTURE_2D);
-    glEnable (GL_BLEND);
+    // glEnable (GL_TEXTURE_2D);
+    // glEnable (GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     // We're only using our single texture, so can bind it permanently.
-    glBindTexture(GL_TEXTURE_2D, tex);
+    // glBindTexture(GL_TEXTURE_2D, tex);
 
     // Texture scaling factors.
     const float tex_scale_x = 1.0f / (float)(ref_img.width  - 1);
@@ -202,31 +220,52 @@ static int run(int argc, char ** argv)
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
+
         // Render current mesh.
-        glBegin(GL_TRIANGLES);
+        glEnable(GL_TEXTURE_2D);
         {
-            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-            // Points for this iteration.
-            const auto * wrp_pts_i = wrp_pts.data() + i * ref_pts.size();
-
-            // Render each 
-            for (auto idx : tri_idx)
+            glBindTexture(GL_TEXTURE_2D, bg_tex);
+            glBegin(GL_QUADS);
             {
-                const auto * ref_pt = ref_pts.data() + (ptrdiff_t)idx * 2;
-                const auto * wrp_pt = wrp_pts_i      + (ptrdiff_t)idx * 2;
+                glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-                glTexCoord2f(ref_pt[0] * tex_scale_x, ref_pt[1] * tex_scale_y);
-                glVertex2f  (wrp_pt[0]              , wrp_pt[1]              );
+                glTexCoord2f(0, 0); glVertex2f(0, 0);
+                glTexCoord2f(1, 0); glVertex2f(ref_img.width, 0); 
+                glTexCoord2f(1, 1); glVertex2f(ref_img.width, ref_img.height); 
+                glTexCoord2f(0, 1); glVertex2f(0, ref_img.height); 
             }
+            glEnd();
+
+            glEnable (GL_BLEND);
+            glBindTexture(GL_TEXTURE_2D, tex);
+            glBegin(GL_TRIANGLES);
+            {
+                glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+                // Points for this iteration.
+                const auto * wrp_pts_i = wrp_pts.data() + i * ref_pts.size();
+
+                // Render each 
+                for (auto idx : tri_idx)
+                {
+                    const auto * ref_pt = ref_pts.data() + (ptrdiff_t)idx * 2;
+                    const auto * wrp_pt = wrp_pts_i      + (ptrdiff_t)idx * 2;
+
+                    glTexCoord2f(ref_pt[0] * tex_scale_x, ref_pt[1] * tex_scale_y);
+                    glVertex2f  (wrp_pt[0]              , wrp_pt[1]              );
+                }
+            }
+            glEnd();
+            glDisable (GL_BLEND);
+
+
+
         }
-        glEnd();
+        glDisable(GL_TEXTURE_2D);
 
         // Render the mesh itself.
         if (show_wireframe)
         {
-            glDisable(GL_TEXTURE_2D);
-
             const float* wrp_pts_i = wrp_pts.data() + i * ref_pts.size();
 
             for (size_t j = 0; j < tri_idx.size(); j += 3)
@@ -244,12 +283,10 @@ static int run(int argc, char ** argv)
 
                 glEnd();
             }
-
-            glEnable(GL_TEXTURE_2D);
         }
 
         // Dump the image.
-        if (dump_images)
+        if (1)
         {
             if (output_buffer.empty())
             {
@@ -260,8 +297,18 @@ static int run(int argc, char ** argv)
 
             glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, output_buffer.data());
 
+            // Convert the image to premultiplied alpha.
+            // for (int i = 0, n = ref_background_img.width * ref_background_img.height * 4; i < n; i += 4)
+            // {
+            //     uint8_t * pix = output_buffer.data() + i;
+            //     uint8_t * background_pix = ref_background_img.data.get() + i;
+            //     pix[0] += background_pix[0];
+            //     pix[1] += background_pix[1];
+            //     pix[2] += background_pix[2];
+            // }
+
             char filename[64];
-            snprintf(filename, sizeof(filename), "%06zu.tga", i);
+            snprintf(filename, sizeof(filename), "C:\\Users\\dinli\\Documents\\Codes\\dingwarp\\test\\output\\%06zu.tga", i);
 
             if (stbi_write_tga(filename, width, height, 4, output_buffer.data()) == 0)
             {
