@@ -20,7 +20,11 @@ mkdir build
 cd build
 cmake -G"<GENERATOR>" ..
 ```
-On macOS, `<GENERATOR>` will be `Xcode`, while on Windows select one of the
+On Linux, you cam simply run `cmake ..`.
+
+On macOS, youcan simply run `cmake ..`. If the compiler fails, try `<GENERATOR>` as `Xcode`.
+
+On Windows select one of the
 Visual Studio flavors, e.g., `Visual Studio 15 2017 Win64`. You can also always
 run `cmake --help` to see the list of all available generators.
 
@@ -30,7 +34,7 @@ cmake --build . --config Release
 ```
 
 ## Running
-After building, the `bin/<Release>` directory should contain the command
+After building, the `bin` directory should contain the command
 line utility. Here's its help. You can also access it by running it with no
 arguments or by calling `facewarp --help`:
 ```
@@ -47,7 +51,7 @@ OPTIONAL PARAMETERS:
 You can test the facewarp by our provided test example
 ```
 cd test/output
-../../bin/facewarp ../image.png ../triangulation.txt ../reference_points.txt ../warped_points.txt ../background.png -dump
-ffmpeg -r 62.5 -f image2 -i %06d.tga ../test.mp4
+../../bin/facewarp ../image.png ../triangulation.txt ../reference_points.txt ../warped_points.txt ../background_white.png -dump
+ffmpeg -r 62.5 -f image2 -i %06d.tga -pix_fmt yuv420p ../test.mp4
 ```
 If you can see the warped cartoon faces during the process and `.tga` image files in `test/output` folder and 'test/test.mp4', facewarp is then successfully built.
