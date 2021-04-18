@@ -34,7 +34,7 @@ cmake --build . --config Release
 ```
 
 ## Running
-After building, the `bin` directory should contain the command
+After building, the `bin` (or `bin\Release` in Windows) directory should contain the command
 line utility. Here's its help. You can also access it by running it with no
 arguments or by calling `facewarp --help`:
 ```
@@ -51,7 +51,11 @@ OPTIONAL PARAMETERS:
 You can test the facewarp by our provided test example
 ```
 cd test/output
+# Linux / macOS
 ../../bin/facewarp ../image.png ../triangulation.txt ../reference_points.txt ../warped_points.txt ../background_white.png -dump
 ffmpeg -r 62.5 -f image2 -i %06d.tga -pix_fmt yuv420p ../test.mp4
+# Windows
+..\..\bin\Release\facewarp.exe ..\image.png ..\triangulation.txt ..\reference_points.txt ..\warped_points.txt ..\background_white.png -dump
+ffmpeg -r 62.5 -f image2 -i %06d.tga -pix_fmt yuv420p -vf scale=800:-2 ..\test.mp4
 ```
-If you can see the warped cartoon faces during the process and `.tga` image files in `test/output` folder and 'test/test.mp4', facewarp is then successfully built.
+If you can see the warped cartoon faces during the process and `.tga` image files in `test/output` folder and `test/test.mp4`, facewarp is then successfully built.
