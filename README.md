@@ -31,6 +31,7 @@ Our method creates both non-photorealistic cartoon animations (top) and natural 
 
 ## Updates
 
+- [x] facewarp source code and compile instructions
 - [x] Pre-trained models
 - [x] Google colab quick demo for natural faces [[detail]](quick_demo.ipynb) [[TDLR]](quick_demo_tdlr.ipynb)
 - [ ] Training code for each module
