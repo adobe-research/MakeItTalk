@@ -55,7 +55,10 @@ class Audio2landmark_model():
         print('G: Running on {}, total num params = {:.2f}M'.format(device, get_n_params(self.G)/1.0e6))
 
         model_dict = self.G.state_dict()
-        ckpt = torch.load(opt_parser.load_a2l_G_name)
+        if device.type == "cpu":
+            ckpt = torch.load(opt_parser.load_a2l_G_name, map_location=torch.device("cpu"))
+        else:
+            ckpt = torch.load(opt_parser.load_a2l_G_name)
         pretrained_dict = {k: v for k, v in ckpt['G'].items() if k.split('.')[0] not in ['comb_mlp']}
         model_dict.update(pretrained_dict)
         self.G.load_state_dict(model_dict)
@@ -68,7 +71,11 @@ class Audio2landmark_model():
                                       in_size=80, use_prior_net=True,
                                       bidirectional=False, drop_out=0.5)
 
-        ckpt = torch.load(opt_parser.load_a2l_C_name)
+        if device.type == "cpu":
+            ckpt = torch.load(opt_parser.load_a2l_C_name, map_location=torch.device("cpu"))
+        else:
+            ckpt = torch.load(opt_parser.load_a2l_C_name)
+            
         self.C.load_state_dict(ckpt['model_g_face_id'])
         # self.C.load_state_dict(ckpt['C'])
         print('======== LOAD PRETRAINED FACE ID MODEL {} ========='.format(opt_parser.load_a2l_C_name))
