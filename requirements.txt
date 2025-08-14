@@ -3,7 +3,6 @@ opencv-python
 face_alignment
 scikit-learn
 pydub
-pynormalize
 soundfile
 librosa
 pysptk
