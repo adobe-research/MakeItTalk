@@ -68,7 +68,7 @@ opt_parser = parser.parse_args()
 
 ''' STEP 1: preprocess input single image '''
 img =cv2.imread('examples/' + opt_parser.jpg)
-predictor = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda', flip_input=True)
+predictor = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device="cuda" if torch.cuda.is_available() else "cpu", flip_input=True)
 shapes = predictor.get_landmarks(img)
 if (not shapes or len(shapes) != 1):
     print('Cannot detect face landmarks. Exit.')
